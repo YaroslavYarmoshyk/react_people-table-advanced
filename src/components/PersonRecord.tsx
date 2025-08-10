@@ -11,8 +11,14 @@ type Props = {
 export const PersonRecord: React.FC<Props> = ({ person, people }) => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
-  const mother = people.find(p => p.name === person.motherName);
-  const father = people.find(p => p.name === person.fatherName);
+  const peopleMap = new Map(people.map(p => [p.name, p]));
+
+  const mother = !person.motherName
+    ? undefined
+    : peopleMap.get(person.motherName);
+  const father = person.fatherName
+    ? peopleMap.get(person.fatherName)
+    : undefined;
 
   return (
     <tr
