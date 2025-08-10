@@ -1,15 +1,11 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import { PersonRecord } from './PersonRecord';
-import { Person } from '../types';
-import React from 'react';
+import { Person, SortField, SortOrder } from '../types';
+import React, { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SearchLink } from './SearchLink';
 
 type FilterCondition<T> = (item: T) => boolean;
-
-type SortField = 'name' | 'sex' | 'born' | 'died';
-
-type SortOrder = 'asc' | 'desc';
 
 type Props = {
   people: Person[];
@@ -34,9 +30,12 @@ function getResultPeople(people: Person[], searchParams: URLSearchParams) {
         field => field && field.toLowerCase().includes(query.toLowerCase()),
       ),
     person => !gender || person.sex === gender,
-    person =>
-      centuries.length === 0 ||
-      centuries.includes(person.born.toString().slice(0, 2)),
+    person => {
+      return (
+        centuries.length === 0 ||
+        centuries.includes(Math.ceil(person.born / 100).toString())
+      );
+    },
   ]);
 
   const filteredPeople = people.filter(filter);
@@ -63,33 +62,44 @@ export const PeopleTable: React.FC<Props> = ({ people }) => {
   const sort = searchParams.get('sort') as SortField | null;
   const order = searchParams.get('order') as 'desc' | null;
 
-  const getSortParams = (field: SortField) => {
-    if (sort !== field) {
-      return { sort: field, order: null };
-    }
+  const getSortParams = useCallback(
+    (field: SortField) => {
+      if (sort !== field) {
+        return { sort: field, order: null };
+      }
 
-    if (order === null) {
-      return { sort: field, order: 'desc' };
-    }
+      if (order === null) {
+        return { sort: field, order: 'desc' };
+      }
 
-    return { sort: null, order: null };
-  };
+      return { sort: null, order: null };
+    },
+    [sort, order],
+  );
 
-  const getSortIcon = (field: SortField) => {
-    if (sort !== field) {
-      return 'fas fa-sort';
-    }
+  const getSortIcon = useCallback(
+    (field: SortField) => {
+      if (sort !== field) {
+        return 'fas fa-sort';
+      }
 
-    if (order === null) {
-      return 'fas fa-sort-up';
-    }
+      if (order === null) {
+        return 'fas fa-sort-up';
+      }
 
-    return 'fas fa-sort-down';
-  };
+      return 'fas fa-sort-down';
+    },
+    [sort, order],
+  );
 
-  const resultPeople = getResultPeople(people, searchParams);
+  const resultPeople = useMemo(
+    () => getResultPeople(people, searchParams),
+    [people, searchParams],
+  );
 
-  return (
+  return resultPeople.length === 0 ? (
+    <p>There are no people matching the current search criteria</p>
+  ) : (
     <table
       data-cy="peopleTable"
       className="table is-striped is-hoverable is-narrow is-fullwidth"
@@ -106,7 +116,6 @@ export const PeopleTable: React.FC<Props> = ({ people }) => {
               </SearchLink>
             </span>
           </th>
-
           <th>
             <span className="is-flex is-flex-wrap-nowrap">
               Sex
@@ -117,7 +126,6 @@ export const PeopleTable: React.FC<Props> = ({ people }) => {
               </SearchLink>
             </span>
           </th>
-
           <th>
             <span className="is-flex is-flex-wrap-nowrap">
               Born
@@ -128,7 +136,6 @@ export const PeopleTable: React.FC<Props> = ({ people }) => {
               </SearchLink>
             </span>
           </th>
-
           <th>
             <span className="is-flex is-flex-wrap-nowrap">
               Died
@@ -139,15 +146,17 @@ export const PeopleTable: React.FC<Props> = ({ people }) => {
               </SearchLink>
             </span>
           </th>
-
           <th>Mother</th>
           <th>Father</th>
         </tr>
       </thead>
-
       <tbody>
         {resultPeople.map(person => (
-          <PersonRecord key={person.slug} person={person} people={people} />
+          <PersonRecord
+            key={person.slug}
+            person={person}
+            people={resultPeople}
+          />
         ))}
       </tbody>
     </table>

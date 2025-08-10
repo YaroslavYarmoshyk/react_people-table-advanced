@@ -5,30 +5,30 @@ import { useEffect, useReducer } from 'react';
 import { getPeople } from '../api';
 import { Person } from '../types';
 
-type State = {
+interface PeopleState {
   loading: boolean;
   errors: string | null;
   people: Person[];
-};
+}
 
-enum ActionType {
+const enum ActionType {
   FETCH_START = 'FETCH_START',
   FETCH_SUCCESS = 'FETCH_SUCCESS',
   FETCH_ERROR = 'FETCH_ERROR',
 }
 
-type Action =
+type PeopleAction =
   | { type: ActionType.FETCH_START }
   | { type: ActionType.FETCH_SUCCESS; payload: Person[] }
   | { type: ActionType.FETCH_ERROR; payload: string };
 
-const initialState: State = {
+const initialState: PeopleState = {
   loading: true,
   errors: null,
   people: [],
 };
 
-function reducer(state: State, action: Action): State {
+function reducer(state: PeopleState, action: PeopleAction): PeopleState {
   switch (action.type) {
     case ActionType.FETCH_START:
       return { ...state, loading: true, errors: null };
@@ -41,7 +41,7 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-function getContent(state: State) {
+function getContent(state: PeopleState) {
   if (state.loading) {
     return null;
   }
@@ -99,18 +99,7 @@ export const PeoplePage = () => {
 
           <div className="column">
             <div className="box table-container">
-              {/*<Loader />*/}
-
-              {/*<p data-cy="peopleLoadingError">Something went wrong</p>*/}
-
-              {/*<p data-cy="noPeopleMessage">There are no people on the server</p>*/}
-
-              {/*<p>There are no people matching the current search criteria</p>*/}
-
-              {/*<PeopleTable />*/}
-              <div className="box table-container">
-                {state.loading ? <Loader /> : getContent(state)}
-              </div>
+              {state.loading ? <Loader /> : getContent(state)}
             </div>
           </div>
         </div>
